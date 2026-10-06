@@ -1,0 +1,22 @@
+# Maven
+/target/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java
+*.class
+hs_err_pid*
+
+# Local runtime output
+out/
+tmp/
