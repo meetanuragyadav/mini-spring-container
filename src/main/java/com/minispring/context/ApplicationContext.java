@@ -5,6 +5,10 @@ import com.minispring.condition.*;
 import com.minispring.core.*;
 import com.minispring.lifecycle.*;
 import com.minispring.scanner.*;
+import com.minispring.events.EventListenerDefinition;
+import com.minispring.events.EventListenerMethodScanner;
+import com.minispring.events.EventPublisher;
+import com.minispring.events.EventRegistry;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -144,6 +148,44 @@ public class ApplicationContext implements AutoCloseable {
 
             if (conditionsMatch(definition)) {
                 container.register(definition);
+            }
+        }
+
+        // =============================================================
+        // PHASE 1.5 — EVENT INFRASTRUCTURE
+        // =============================================================
+        // Event infrastructure is registered through normal BeanDefinitions.
+        // The registry is resolved and populated now, before any application
+        // code can request EventPublisher. The publisher itself remains lazy.
+
+        container.register(new BeanDefinition(
+                EventRegistry.class,
+                Scope.SINGLETON,
+                null,
+                false
+        ));
+        container.register(new BeanDefinition(
+                EventPublisher.class,
+                Scope.SINGLETON,
+                null,
+                false
+        ));
+
+        EventRegistry eventRegistry =
+                (EventRegistry) container.resolve(EventRegistry.class);
+        EventListenerMethodScanner eventListenerScanner =
+                new EventListenerMethodScanner();
+
+        for (Class<?> component : components) {
+            // Inactive conditional components have no registered definition,
+            // so their listener methods must not enter this application's registry.
+            if (container.getBeanDefinition(component) == null) {
+                continue;
+            }
+
+            for (EventListenerDefinition listenerDefinition :
+                    eventListenerScanner.scan(component)) {
+                eventRegistry.register(listenerDefinition);
             }
         }
 
@@ -369,6 +411,13 @@ public class ApplicationContext implements AutoCloseable {
         return type.cast(
                 container.resolve(type, qualifier)
         );
+    }
+
+    /**
+     * Publish an application event through the managed EventPublisher bean.
+     */
+    public void publishEvent(Object event) throws Exception {
+        getBean(EventPublisher.class).publishEvent(event);
     }
 
     /**

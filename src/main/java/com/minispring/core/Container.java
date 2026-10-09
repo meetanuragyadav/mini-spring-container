@@ -15,6 +15,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * The runtime engine of the mini Spring container.
@@ -30,7 +31,7 @@ import java.util.Map;
  *   6. Run the bean lifecycle and post-processors.
  *   7. Detect recursive resolution and destroy managed singletons.
  */
-public class Container {
+public class Container implements BeanResolver {
 
     // Metadata: "What beans are available and how should they behave?"
     private final Map<Class<?>, BeanDefinition> definitions =
@@ -52,6 +53,23 @@ public class Container {
     private final List<Object> singletonCreationOrder =
             new ArrayList<>();
 
+
+    /**
+     * The container also acts as the default BeanResolver infrastructure bean.
+     * Registering the already-existing container lets beans depend on the
+     * BeanResolver interface without introducing a dependency on ApplicationContext.
+     */
+    public Container() {
+        BeanDefinition selfDefinition = new BeanDefinition(
+                Container.class,
+                Scope.SINGLETON,
+                null,
+                true
+        );
+        definitions.put(Container.class, selfDefinition);
+        instances.put(Container.class, this);
+        singletonCreationOrder.add(this);
+    }
 
     // =============================================================
     // REGISTRATION
@@ -112,8 +130,10 @@ public class Container {
     /**
      * Resolve a bean without an explicit qualifier.
      */
+    @Override
     public Object resolve(Class<?> type)
             throws Exception {
+        Objects.requireNonNull(type, "Requested bean type must not be null");
         return resolve(type, null);
     }
 

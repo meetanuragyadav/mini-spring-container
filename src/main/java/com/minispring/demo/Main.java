@@ -21,7 +21,13 @@ public final class Main {
 
             OrderService orderService =
                     context.getBean(OrderService.class);
-            orderService.placeOrder();
+            orderService.placeOrder("order-1001");
+
+            OrderCreatedListener orderListener =
+                    context.getBean(OrderCreatedListener.class);
+            System.out.println(
+                    "Listener received order: " + orderListener.getLastOrderId()
+            );
 
             ScopeConsumer scopeConsumer =
                     context.getBean(ScopeConsumer.class);
