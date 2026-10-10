@@ -67,6 +67,7 @@ public class ApplicationContext implements AutoCloseable {
 
         this.container = new Container();
         this.environment = environment;
+        this.container.setApplicationContext(this);
 
         // =============================================================
         // PHASE 0 — DISCOVERY
@@ -269,7 +270,13 @@ public class ApplicationContext implements AutoCloseable {
                         qualifier,
                         primary
                 );
+        String simpleName = component.getSimpleName();
 
+        String beanName =
+                Character.toLowerCase(simpleName.charAt(0))
+                        + simpleName.substring(1);
+
+        definition.setBeanName(beanName);
         addTypeConditions(definition, component);
         return definition;
     }
@@ -306,7 +313,7 @@ public class ApplicationContext implements AutoCloseable {
                         qualifier,
                         primary
                 );
-
+        definition.setBeanName(method.getName());
         definition.setFactoryMethod(method);
         addMethodConditions(definition, method);
 

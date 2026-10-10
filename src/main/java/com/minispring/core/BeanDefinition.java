@@ -27,7 +27,7 @@ public class BeanDefinition {
     private final boolean primary;
     private Method factoryMethod;
     private final List<Condition> conditions = new ArrayList<>();
-
+    private String beanName;
     public BeanDefinition(
             Class<?> beanClass,
             Scope scope,
@@ -89,5 +89,19 @@ public class BeanDefinition {
      */
     public List<Condition> getConditions() {
         return Collections.unmodifiableList(conditions);
+    }
+//  BeanName :
+    public String getBeanName() {
+        return beanName;
+    }
+
+    public void setBeanName(String beanName) {
+        if (beanName == null || beanName.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Bean name cannot be null or blank"
+            );
+        }
+
+        this.beanName = beanName;
     }
 }

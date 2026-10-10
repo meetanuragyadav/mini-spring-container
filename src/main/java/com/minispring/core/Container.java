@@ -2,7 +2,7 @@ package com.minispring.core;
 
 import com.minispring.annotation.*;
 import com.minispring.lifecycle.*;
-
+import com.minispring.context.ApplicationContext;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -53,7 +53,7 @@ public class Container implements BeanResolver {
     private final List<Object> singletonCreationOrder =
             new ArrayList<>();
 
-
+    private ApplicationContext applicationContext;
     /**
      * The container also acts as the default BeanResolver infrastructure bean.
      * Registering the already-existing container lets beans depend on the
@@ -199,7 +199,26 @@ public class Container implements BeanResolver {
             } else {
                 object = createUsingConstructor(actualType);
             }
+            if (object instanceof BeanNameAware) {
+                String beanName = definition.getBeanName();
 
+                if (beanName == null || beanName.isBlank()) {
+                    throw new IllegalStateException(
+                            "BeanNameAware bean has no registered name: "
+                                    + actualType.getName()
+                    );
+                }
+
+                ((BeanNameAware) object).setBeanName(beanName);
+            }
+            if (object instanceof BeanResolverAware) {
+                ((BeanResolverAware) object).setBeanResolver(this);
+            }
+
+            if (object instanceof ApplicationContextAware) {
+                ((ApplicationContextAware) object)
+                        .setApplicationContext(applicationContext);
+            }
             // Post-processors may inspect or wrap the object before its
             // initialization callback runs.
             for (BeanPostProcessor processor : postProcessors) {
@@ -527,5 +546,17 @@ public class Container implements BeanResolver {
                         + type.getName()
                         + ". Mark one with @Inject."
         );
+    }
+
+    public void setApplicationContext(
+            ApplicationContext applicationContext) {
+
+        if (applicationContext == null) {
+            throw new IllegalArgumentException(
+                    "ApplicationContext cannot be null"
+            );
+        }
+
+        this.applicationContext = applicationContext;
     }
 }
