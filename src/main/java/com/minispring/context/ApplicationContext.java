@@ -9,7 +9,8 @@ import com.minispring.events.EventListenerDefinition;
 import com.minispring.events.EventListenerMethodScanner;
 import com.minispring.events.EventPublisher;
 import com.minispring.events.EventRegistry;
-
+import com.minispring.aop.AopBeanPostProcessor;
+import com.minispring.aop.InterceptorBinding;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class ApplicationContext implements AutoCloseable {
      */
     public ApplicationContext(String packageName)
             throws Exception {
-        this(packageName, new Environment());
+        this(packageName, new Environment(), List.of());
     }
 
     /**
@@ -59,10 +60,23 @@ public class ApplicationContext implements AutoCloseable {
             Environment environment)
             throws Exception {
 
+        this(packageName, environment, List.of());
+    }
+
+    public ApplicationContext(
+            String packageName,
+            Environment environment,
+            List<InterceptorBinding> aopBindings)
+            throws Exception {
+
         if (environment == null) {
             throw new IllegalArgumentException(
-                    "Environment cannot be null"
-            );
+                    "Environment cannot be null");
+        }
+
+        if (aopBindings == null) {
+            throw new IllegalArgumentException(
+                    "AOP bindings cannot be null");
         }
 
         this.container = new Container();
@@ -238,6 +252,12 @@ public class ApplicationContext implements AutoCloseable {
 
             container.addBeanPostProcessor(processor);
         }
+        // Install AOP after the existing infrastructure processors.
+        // Application beans are created lazily after context setup.
+                if (!aopBindings.isEmpty()) {
+                    container.addBeanPostProcessor(
+                            new AopBeanPostProcessor(aopBindings));
+                }
     }
 
     /**

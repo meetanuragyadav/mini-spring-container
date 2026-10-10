@@ -88,6 +88,6 @@ For the current implementation:
 
 This ordering is project-specific and is tested by the repository's integration tests.
 
-## Future AOP extension point
+## AOP extension point and current implementation
 
-`BeanPostProcessor.afterInitialization` can return a different object, making it a potential integration point for future proxies. Proxy creation, advice, and pointcut matching are not implemented yet.
+`AopBeanPostProcessor` uses `BeanPostProcessor.afterInitialization` to wrap eligible interface-based beans in JDK dynamic proxies. `MethodExecution` selects configured `InterceptorBinding` objects, and an `Invocation` advances the ordered interceptor chain. Class-based proxies are not implemented. Self-invocation bypasses the proxy, and consumers should request proxied beans through their interfaces.

@@ -137,6 +137,12 @@ Cache singleton and return
 
 For exact behavior and limitations, consult the detailed lifecycle diagram in `MINISPRING_INTERNALS.md`.
 
+## AOP example
+
+AOP is configured explicitly through the three-argument `ApplicationContext` constructor. Each `InterceptorBinding` combines a method matcher and interceptor. A matching interceptor must call `invocation.proceed()` to continue toward the real target.
+
+The standalone examples live in `com.minispring.demo.aop`. For the container-integrated version, inspect `AopApplicationContextIntegrationTest`: it demonstrates automatic proxying and injection through an interface. A JDK proxy is not an instance of the target implementation class, and a target's direct self-invocation does not cross the proxy.
+
 ## 5. Test map
 
 | Test class | What it focuses on |

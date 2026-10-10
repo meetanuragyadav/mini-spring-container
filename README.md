@@ -4,7 +4,7 @@
 
 It is designed to help you understand *why* a framework needs each mechanism, *what* that mechanism is responsible for, and *how* the pieces work together.
 
-> **Status:** Spring Core learning project in active development. The implemented areas include dependency injection, component scanning, bean scopes and lifecycle, factory methods, conditional registration, application events, and Aware callbacks. AOP and proxy infrastructure are the next learning stages.
+> **Status:** Spring Core learning project in active development. Implemented areas include dependency injection, component scanning, bean scopes and lifecycle, factory methods, conditional registration, application events, Aware callbacks, and an educational interface-based AOP pipeline.
 
 ## Start here
 
@@ -39,6 +39,10 @@ MiniSpring implements simplified versions of these mechanisms so they can be stu
 - Profiles and property-based conditional registration
 - Synchronous application events through `@EventListener`
 - `BeanNameAware`, `BeanResolverAware`, and `ApplicationContextAware` callbacks
+- Interface-based AOP using JDK dynamic proxies
+- Method matchers and ordered interceptor chains
+- Logging and timing interceptor examples
+- Automatic proxy creation through `AopBeanPostProcessor` when configured bindings match
 - JUnit 5 tests for the current implementation
 
 The two interfaces `BeanResolverAware` and this project's `ApplicationContextAware` are MiniSpring learning implementations. `BeanNameAware` follows Spring's interface name; MiniSpring is not a drop-in implementation of Spring's APIs.
@@ -90,18 +94,45 @@ Lifecycle, scopes, and post-processors        ✓
 Factory methods and conditional registration  ✓
 Application events                            ✓
 Aware callbacks                               ✓
-AOP fundamentals                              ← next
-Proxies and JDK dynamic proxies
-Class-based proxies / CGLIB concepts
+AOP fundamentals and interceptor chains        ✓
+JDK dynamic proxies and automatic proxying     ✓
+Class-based proxies / CGLIB concepts           → future learning stage
 Spring Core internals
 Connect the concepts to Spring Boot
 ```
 
 ## Scope and limitations
 
-MiniSpring is an educational framework, **not a replacement for Spring and not intended as a production dependency-injection library**. It deliberately implements a small subset of Spring's behavior. For example, the current classpath scanner is simple and directory-oriented, bean registrations are keyed by class (so multiple separately named definitions of the same class are not supported), event delivery is synchronous and matches the exact event class, and full proxy/AOP support has not been implemented yet.
+MiniSpring is an educational framework, **not a replacement for Spring and not intended as a production dependency-injection library**. It deliberately implements a small subset of Spring's behavior. For example, the current classpath scanner is simple and directory-oriented, bean registrations are keyed by class (so multiple separately named definitions of the same class are not supported), event delivery is synchronous and matches the exact event class, and AOP currently supports interface-based JDK dynamic proxies rather than class-based proxies.
 
-Those limitations are documented in [MiniSpring Internals](MINISPRING_INTERNALS.md) so future improvements can be made deliberately rather than hidden behind claims of full Spring compatibility.
+### AOP behavior and limitations
+
+Configure AOP by passing a list of `InterceptorBinding` objects to the three-argument `ApplicationContext` constructor. Each binding combines a `MethodMatcher` with a `MethodInterceptor`. Matching bindings run in their configured order; each interceptor calls `invocation.proceed()` to continue the chain.
+
+```java
+List<InterceptorBinding> bindings = List.of(
+    new InterceptorBinding(
+        new MethodNameMatcher("placeOrder"),
+        new LoggingInterceptor()
+    )
+);
+
+try (ApplicationContext context = new ApplicationContext(
+        "com.example.app", new Environment(), bindings)) {
+    OrderService service = context.getBean(OrderService.class);
+    service.placeOrder();
+}
+```
+
+The example assumes `OrderService` is an interface and a matching bean is discovered under the supplied package. See `com.minispring.demo.aop` for runnable examples and the exact project setup.
+
+- **Interface-based only:** a JDK proxy implements interfaces; it is not an instance of the concrete target class. Retrieve proxied beans through their interface.
+- **Self-invocation:** a target method calling another method on `this` bypasses the proxy, so the inner call is not intercepted.
+- **Matching scope:** the current `MethodNameMatcher` matches by method name, so overloaded methods with the same name also match.
+- **No class proxying:** CGLIB-style subclass proxies, introductions, annotation-driven pointcuts, and full Spring AOP compatibility are not implemented.
+- **Post-processing:** AOP proxying happens after initialization for beans created after the AOP post-processor is registered. Existing infrastructure beans are not retroactively proxied.
+
+These are deliberate boundaries of this learning implementation, not claims of complete Spring compatibility. See [MiniSpring Internals](MINISPRING_INTERNALS.md) for the broader architecture and other limitations.
 
 ## Learning method
 

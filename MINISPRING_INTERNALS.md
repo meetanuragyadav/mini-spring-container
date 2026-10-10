@@ -2,7 +2,7 @@
 
 This document is the detailed companion to the [README](README.md). It explains what each part of MiniSpring does, why it exists, how a request moves through the framework, and what the current implementation does **not** promise.
 
-The goal is not to describe all of Spring. The goal is to make this repository understandable enough that each next feature—starting with AOP—can be added without treating the container as a black box.
+The goal is not to describe all of Spring. The goal is to make this repository understandable enough that each next feature—can be added without treating the container as a black box.
 
 ## 1. What problem does MiniSpring solve?
 
@@ -404,9 +404,9 @@ sequenceDiagram
 - `BeanResolverAware`: receives the container's resolver interface.
 - `ApplicationContextAware`: receives the owning context in this MiniSpring implementation.
 
-### Why post-processors matter for future AOP
+### AOP uses the post-processor extension point
 
-`afterInitialization` is allowed to return a different object. That makes it a natural extension point for a future proxy-based feature. But the repository does **not yet implement a complete AOP system**; having this hook is groundwork, not AOP itself.
+`afterInitialization` may return a different object. MiniSpring uses this extension point through `AopBeanPostProcessor` to wrap eligible beans in JDK dynamic proxies. The implementation is intentionally limited to interface-based proxies and explicitly configured `InterceptorBinding` objects.
 
 ### Important limitation
 
@@ -508,7 +508,7 @@ A passing test proves the specific behavior it exercises; it does not imply full
 | Prototype destruction | Not tracked like singleton destruction |
 | Events | Synchronous, exact-class dispatch; no retry/async infrastructure |
 | Listener discovery | Scans eligible component classes; factory-produced listener objects are not discovered |
-| AOP | No full advice, pointcut, or proxy infrastructure yet |
+| AOP | Configured method matchers, ordered interceptors, and JDK interface proxies; no class proxies or full Spring AOP compatibility |
 | Spring compatibility | Educational subset; not drop-in compatible with the Spring Framework |
 
 These constraints are useful boundaries for future development. Improvements should be added deliberately, with tests and updated documentation.
@@ -526,25 +526,25 @@ java -jar target/mini-spring-container-0.1.0-SNAPSHOT.jar
 
 Use `mvn test` after each meaningful change. When a subsystem is complete, review `git diff`, commit the milestone, and push when ready.
 
-## 18. The next planned subsystem: AOP
+## 18. AOP: from repeated behavior to an interceptor chain
 
-The next learning stage begins with a simple question:
-
-> How can logging or timing wrap a method call without being repeated inside every service method?
-
-The planned progression is:
+MiniSpring AOP addresses the problem of applying behavior such as logging or timing around service calls without copying that behavior into every service.
 
 ```mermaid
 flowchart TD
-    A[Repeated cross-cutting code] --> B[Separate the shared behavior]
-    B --> C[Understand advice and join points]
-    C --> D[Understand pointcuts]
-    D --> E[Build a small Java proxy]
-    E --> F[Integrate proxy creation with BeanPostProcessor]
-    F --> G[Compare JDK dynamic proxies and class proxies]
+    A[Caller invokes interface] --> B[JDK dynamic proxy]
+    B --> C[MethodExecution selects matching bindings]
+    C --> D[Interceptor chain]
+    D --> E[Real target method]
+    E --> F[Return value or exception]
 ```
 
-The existing post-processor hook is relevant groundwork, but AOP should be built as a new subsystem and verified independently.
+- `MethodMatcher` decides which interface methods are eligible.
+- `InterceptorBinding` pairs a matcher with a `MethodInterceptor`.
+- `Invocation` represents one method call and advances the chain through `proceed()`.
+- `AopBeanPostProcessor` creates a proxy after initialization when a binding matches.
+
+The implementation is educational, not Spring-compatible. It uses JDK interface proxies; calls made by a target to another method on `this` bypass the proxy (self-invocation), and a proxied bean should be requested through its interface. The method-name matcher also matches every overload with that name.
 
 ---
 
