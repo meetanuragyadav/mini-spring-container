@@ -1,8 +1,6 @@
 package com.minispring.core;
-import com.minispring.condition.Condition;
 
-import com.minispring.annotation.*;
-import com.minispring.lifecycle.*;
+import com.minispring.condition.Condition;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -21,13 +19,19 @@ import java.util.List;
  */
 public class BeanDefinition {
 
+    // Identity and selection metadata used while choosing a bean.
     private final Class<?> beanClass;
+    private String beanName;
     private Scope scope;
     private final String qualifier;
     private final boolean primary;
+
+    // Creation metadata: a null factoryMethod means constructor-based creation.
     private Method factoryMethod;
+
+    // All conditions must match before ApplicationContext registers this definition.
     private final List<Condition> conditions = new ArrayList<>();
-    private String beanName;
+
     public BeanDefinition(
             Class<?> beanClass,
             Scope scope,
@@ -39,6 +43,10 @@ public class BeanDefinition {
         this.qualifier = qualifier;
         this.primary = primary;
     }
+
+    // =============================================================
+    // BASIC METADATA
+    // =============================================================
 
     public Class<?> getBeanClass() {
         return beanClass;
@@ -60,6 +68,10 @@ public class BeanDefinition {
         return primary;
     }
 
+    // =============================================================
+    // CREATION STRATEGY
+    // =============================================================
+
     /**
      * Non-null only when this definition represents an @Bean factory method.
      */
@@ -70,6 +82,10 @@ public class BeanDefinition {
     public void setFactoryMethod(Method factoryMethod) {
         this.factoryMethod = factoryMethod;
     }
+
+    // =============================================================
+    // CONDITIONAL REGISTRATION
+    // =============================================================
 
     /**
      * Add a condition that must match before this definition can be registered.
@@ -90,7 +106,15 @@ public class BeanDefinition {
     public List<Condition> getConditions() {
         return Collections.unmodifiableList(conditions);
     }
-//  BeanName :
+
+    // =============================================================
+    // BEAN NAME AWARENESS
+    // =============================================================
+
+    /**
+     * Name supplied to beans that implement BeanNameAware. The current
+     * container is class-keyed; this name is metadata, not a lookup key.
+     */
     public String getBeanName() {
         return beanName;
     }

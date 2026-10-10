@@ -3,6 +3,12 @@ package com.minispring.events;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
+/**
+ * Immutable description of one listener method.
+ *
+ * It stores reflection metadata only; EventPublisher resolves the actual
+ * listener object through BeanResolver when an event is dispatched.
+ */
 public final class EventListenerDefinition {
 
     private final Class<?> beanClass;

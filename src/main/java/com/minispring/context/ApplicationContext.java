@@ -67,6 +67,8 @@ public class ApplicationContext implements AutoCloseable {
 
         this.container = new Container();
         this.environment = environment;
+        // The context owns this container. Beans that implement
+        // ApplicationContextAware receive this same context during creation.
         this.container.setApplicationContext(this);
 
         // =============================================================
@@ -276,6 +278,8 @@ public class ApplicationContext implements AutoCloseable {
                 Character.toLowerCase(simpleName.charAt(0))
                         + simpleName.substring(1);
 
+        // Keep the conventional component name as metadata for BeanNameAware.
+        // The current Container still resolves and caches by class, not by name.
         definition.setBeanName(beanName);
         addTypeConditions(definition, component);
         return definition;
@@ -313,6 +317,7 @@ public class ApplicationContext implements AutoCloseable {
                         qualifier,
                         primary
                 );
+        // For @Bean products, the factory method name is the bean name.
         definition.setBeanName(method.getName());
         definition.setFactoryMethod(method);
         addMethodConditions(definition, method);

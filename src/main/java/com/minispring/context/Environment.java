@@ -30,9 +30,15 @@ import java.util.Set;
  */
 public class Environment {
 
+    // Profiles enable groups of environment-specific components.
     private final Set<String> activeProfiles = new HashSet<>();
 
+    // Simple string configuration values consumed by conditional rules.
     private final Map<String, String> properties = new HashMap<>();
+
+    // =============================================================
+    // PROFILES
+    // =============================================================
 
     /**
      * Activates a profile.
@@ -68,6 +74,10 @@ public class Environment {
     public Set<String> getActiveProfiles() {
         return Collections.unmodifiableSet(activeProfiles);
     }
+
+    // =============================================================
+    // PROPERTIES
+    // =============================================================
 
     /**
      * Sets a configuration property.

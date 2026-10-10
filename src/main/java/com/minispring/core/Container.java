@@ -1,8 +1,8 @@
 package com.minispring.core;
 
 import com.minispring.annotation.*;
-import com.minispring.lifecycle.*;
 import com.minispring.context.ApplicationContext;
+import com.minispring.lifecycle.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -53,7 +53,9 @@ public class Container implements BeanResolver {
     private final List<Object> singletonCreationOrder =
             new ArrayList<>();
 
+    // Set by ApplicationContext so context-aware beans receive their owner.
     private ApplicationContext applicationContext;
+
     /**
      * The container also acts as the default BeanResolver infrastructure bean.
      * Registering the already-existing container lets beans depend on the
@@ -199,6 +201,11 @@ public class Container implements BeanResolver {
             } else {
                 object = createUsingConstructor(actualType);
             }
+            // =============================================================
+            // AWARE CALLBACKS
+            // =============================================================
+            // The instance now exists. Supply container-related information
+            // before the ordinary initialization/post-processing callbacks.
             if (object instanceof BeanNameAware) {
                 String beanName = definition.getBeanName();
 
@@ -211,6 +218,7 @@ public class Container implements BeanResolver {
 
                 ((BeanNameAware) object).setBeanName(beanName);
             }
+
             if (object instanceof BeanResolverAware) {
                 ((BeanResolverAware) object).setBeanResolver(this);
             }
@@ -219,6 +227,10 @@ public class Container implements BeanResolver {
                 ((ApplicationContextAware) object)
                         .setApplicationContext(applicationContext);
             }
+
+            // =============================================================
+            // INITIALIZATION AND POST-PROCESSING
+            // =============================================================
             // Post-processors may inspect or wrap the object before its
             // initialization callback runs.
             for (BeanPostProcessor processor : postProcessors) {
@@ -548,6 +560,12 @@ public class Container implements BeanResolver {
         );
     }
 
+    /**
+     * Connect this container to the context that owns it.
+     *
+     * This is called by ApplicationContext during construction, before
+     * application beans are resolved.
+     */
     public void setApplicationContext(
             ApplicationContext applicationContext) {
 

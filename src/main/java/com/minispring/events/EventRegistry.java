@@ -6,8 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Stores listener metadata grouped by the exact event class they accept.
+ *
+ * Registration is performed during context setup; EventPublisher reads this
+ * registry when an event is published.
+ */
 public final class EventRegistry {
 
+    // One event class may have multiple listener methods.
     private final Map<Class<?>, List<EventListenerDefinition>> listeners =
             new HashMap<>();
 

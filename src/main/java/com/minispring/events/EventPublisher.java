@@ -17,7 +17,10 @@ import java.util.Objects;
  */
 public final class EventPublisher {
 
+    // Listener metadata is separate from listener object instances.
     private final EventRegistry registry;
+
+    // Resolve listener beans through MiniSpring so their scope/lifecycle is respected.
     private final BeanResolver beanResolver;
 
     public EventPublisher(EventRegistry registry, BeanResolver beanResolver) {
@@ -31,7 +34,11 @@ public final class EventPublisher {
      */
     public void publishEvent(Object event) {
         Objects.requireNonNull(event, "Event must not be null");
+        // This version intentionally uses exact runtime-class matching.
         var definitions = registry.getListeners(event.getClass());
+
+        // Reuse one resolved instance per listener class for this dispatch.
+        // A new map is created for each published event.
         Map<Class<?>, Object> beansForThisDispatch = new HashMap<>();
 
         for (EventListenerDefinition definition : definitions) {
