@@ -254,10 +254,10 @@ public class ApplicationContext implements AutoCloseable {
         }
         // Install AOP after the existing infrastructure processors.
         // Application beans are created lazily after context setup.
-                if (!aopBindings.isEmpty()) {
-                    container.addBeanPostProcessor(
-                            new AopBeanPostProcessor(aopBindings));
-                }
+        if (!aopBindings.isEmpty()) {
+            container.addBeanPostProcessor(
+                    new AopBeanPostProcessor(aopBindings));
+        }
     }
 
     /**

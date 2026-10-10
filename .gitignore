@@ -1,22 +1,26 @@
-# Maven
+# Maven build output
 /target/
 
-# IDEs
+# IDE metadata
 .idea/
-.vscode/
+**/.idea/
 *.iml
 .classpath
 .project
 .settings/
+.vscode/
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# Java
+# Java and runtime output
 *.class
 hs_err_pid*
-
-# Local runtime output
 out/
 tmp/
+*.log
+
+# Coverage and profiling output
+/jacoco.exec
+/coverage/

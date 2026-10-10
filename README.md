@@ -1,149 +1,109 @@
 # MiniSpring
 
-**MiniSpring is an educational Java 17 project that rebuilds the core ideas behind a Spring-style IoC container from first principles.**
+[![Java 17](https://img.shields.io/badge/Java-17+-orange?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Maven](https://img.shields.io/badge/build-Maven-blue?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![CI](https://github.com/meetanuragyadav/mini-spring-container/actions/workflows/build.yml/badge.svg)](https://github.com/meetanuragyadav/mini-spring-container/actions/workflows/build.yml)
 
-It is designed to help you understand *why* a framework needs each mechanism, *what* that mechanism is responsible for, and *how* the pieces work together.
+**MiniSpring is a lightweight Java project that implements selected Spring-style dependency-injection, bean-lifecycle, event, and AOP concepts.** It demonstrates how a framework can discover components, describe them as metadata, construct dependency graphs, manage object lifecycles, and intercept interface method calls.
 
-> **Status:** Spring Core learning project in active development. Implemented areas include dependency injection, component scanning, bean scopes and lifecycle, factory methods, conditional registration, application events, Aware callbacks, and an educational interface-based AOP pipeline.
+The project is built with Java 17, Maven, and JUnit 5. It is intended as a compact, testable reference implementation—not as a drop-in replacement for the Spring Framework or as a production dependency-injection library.
 
-## Start here
+## Architecture at a glance
 
-- **[MiniSpring Internals](MINISPRING_INTERNALS.md)** — detailed explanation of the architecture, components, algorithms, lifecycle, flows, and current limitations.
-- **[MiniSpring Demo & Verification Guide](MINISPRING_DEMO.md)** — how to run the examples, understand the demo, run tests, and verify features.
-- **[Architecture Notes](docs/architecture.md)** — concise responsibility boundaries and architecture diagrams.
+![MiniSpring Architecture Overview](docs/images/minispring-architecture.png)
 
-## Why build a mini container?
+MiniSpring separates responsibilities across discovery, configuration, bean metadata, and runtime resolution. `ApplicationContext` coordinates startup; `Container` resolves and creates objects; lifecycle extensions and post-processors add behavior around creation.
 
-Spring lets an application request a managed object without manually constructing every dependency. Underneath that convenience, a container must answer questions such as:
+## Features
 
-- Who creates objects, and who owns their lifecycle?
-- How does a constructor receive the objects it needs?
-- How does the framework choose between multiple implementations?
-- How can it discover components and factory methods?
-- What is the difference between a bean definition and a bean instance?
-- When should initialization callbacks and post-processors run?
-- How can the container detect circular dependencies?
-- How can profiles and properties decide whether a bean participates?
-- How can an event reach the right listener?
+- **Dependency injection:** constructor-based resolution, qualifiers, primary candidates, and deferred resolution with `Provider<T>`.
+- **Component discovery:** `@Component`, `@Configuration`, and `@Bean` factory methods.
+- **Bean management:** singleton and prototype scopes, definition metadata, circular-dependency detection, and singleton caching.
+- **Lifecycle extension points:** initialization, destruction, aware callbacks, `BeanFactoryPostProcessor`, and `BeanPostProcessor`.
+- **Conditional configuration:** environment properties and profiles.
+- **Application events:** `@EventListener` discovery and synchronous event publication.
+- **Aspect-oriented programming:** method matchers, interceptor bindings, ordered interceptor chains, logging and timing interceptors, and automatic proxying through a bean post-processor.
+- **Automated tests:** JUnit 5 coverage for container behavior, lifecycle callbacks, event handling, proxy behavior, and AOP integration.
 
-MiniSpring implements simplified versions of these mechanisms so they can be studied and tested independently.
+## Bean lifecycle
+![MiniSpring Bean Lifecycle Flow](docs/images/minispring-bean-lifecycle.png)
 
-## Current capabilities
 
-- Inversion of Control and constructor dependency injection
-- `@Inject`, `@Qualifier`, and `@Primary`
-- `Provider<T>` for deferred dependency resolution
-- Classpath scanning, `@Component`, `@Configuration`, and `@Bean`
-- `BeanDefinition` metadata, singleton/prototype scopes, and circular-dependency detection
-- `Initializable`, `Destroyable`, `BeanPostProcessor`, and `BeanFactoryPostProcessor`
-- Profiles and property-based conditional registration
-- Synchronous application events through `@EventListener`
-- `BeanNameAware`, `BeanResolverAware`, and `ApplicationContextAware` callbacks
-- Interface-based AOP using JDK dynamic proxies
-- Method matchers and ordered interceptor chains
-- Logging and timing interceptor examples
-- Automatic proxy creation through `AopBeanPostProcessor` when configured bindings match
-- JUnit 5 tests for the current implementation
+The container resolves a definition, creates an object through a constructor or factory method, invokes supported callbacks, applies post-processors, and then caches the processed reference when the bean uses singleton scope.
 
-The two interfaces `BeanResolverAware` and this project's `ApplicationContextAware` are MiniSpring learning implementations. `BeanNameAware` follows Spring's interface name; MiniSpring is not a drop-in implementation of Spring's APIs.
+## AOP execution flow
+
+![MiniSpring AOP Execution Flow](docs/images/minispring-aop-flow.png)
+
+A configured matcher selects interceptors for a method call. The interceptor chain wraps the target invocation, allowing cross-cutting behavior such as logging and timing to run without placing that code inside the business method.
 
 ## Requirements
 
-- Java 17 or newer
-- Maven
+- JDK 17 or newer
+- Apache Maven 3.8 or newer
 
 ## Build and test
 
-From the directory containing `pom.xml`:
+Run these commands from the repository root:
 
 ```bash
-mvn test
 mvn clean verify
 ```
 
-Run the example application:
+Run the general container example:
 
 ```bash
 mvn package
 java -jar target/mini-spring-container-0.1.0-SNAPSHOT.jar
 ```
 
-## Package map
+Run the container-integrated AOP example:
+
+```bash
+java -cp target/classes com.minispring.demo.aopcontainer.AopContainerDemo
+```
+
+The AOP example configures logging and timing interceptors for `processPayment`, requests the service through its interface, and invokes the method through the generated proxy.
+
+## Project structure
 
 ```text
-src/main/java/com/minispring/
-├── annotation/   Annotations that describe components and configuration
-├── condition/    Rules used to decide whether definitions are eligible
-├── context/      ApplicationContext and Environment
-├── core/         BeanDefinition, Container, scopes, resolver, Provider
-├── demo/         Small runnable examples
-├── events/       Event listener metadata, registry, and publisher
-├── lifecycle/    Initialization, destruction, awareness, and processor contracts
-└── scanner/      Classpath and semantic scanners
+src/
+├── main/java/com/minispring/
+│   ├── annotation/  Framework annotations
+│   ├── aop/         Matchers, interceptors, invocation chain, proxy factory
+│   ├── condition/   Profile and property conditions
+│   ├── context/     ApplicationContext and Environment
+│   ├── core/        Bean definitions, container, scopes, providers
+│   ├── demo/        Runnable examples
+│   ├── events/      Event registry, listener scanning, publisher
+│   ├── lifecycle/   Lifecycle and processor contracts
+│   └── scanner/     Classpath, component, and configuration scanning
+└── test/java/       Unit and integration tests
 
-src/test/java/com/minispring/
-└── ...           Automated tests for framework behavior
+docs/
+├── architecture.md
+├── usage.md
+└── images/          README architecture diagrams
 ```
 
-## Learning roadmap
+## Documentation
 
-```text
-IoC and dependency injection                 ✓
-Discovery and bean definitions               ✓
-Lifecycle, scopes, and post-processors        ✓
-Factory methods and conditional registration  ✓
-Application events                            ✓
-Aware callbacks                               ✓
-AOP fundamentals and interceptor chains        ✓
-JDK dynamic proxies and automatic proxying     ✓
-Class-based proxies / CGLIB concepts           → future learning stage
-Spring Core internals
-Connect the concepts to Spring Boot
-```
+- [Architecture and Explaination](docs/architecture.md)
+- [Build, run, configuration, and AOP examples](docs/usage.md)
+## Design boundaries
 
-## Scope and limitations
+MiniSpring intentionally implements a limited subset of Spring-style behavior:
 
-MiniSpring is an educational framework, **not a replacement for Spring and not intended as a production dependency-injection library**. It deliberately implements a small subset of Spring's behavior. For example, the current classpath scanner is simple and directory-oriented, bean registrations are keyed by class (so multiple separately named definitions of the same class are not supported), event delivery is synchronous and matches the exact event class, and AOP currently supports interface-based JDK dynamic proxies rather than class-based proxies.
+- Bean definitions and singleton instances are keyed by class; separately named registrations of the same class and general name-based lookup are not supported.
+- The classpath scanner is intentionally simple and is not designed to cover every packaging or class-loader scenario.
+- Event dispatch is synchronous and currently matches the exact runtime event class.
+- AOP uses JDK dynamic proxies, so proxied beans should be accessed through their interfaces. Class-based proxies are not implemented.
+- A target's direct call to another method on `this` bypasses the proxy (self-invocation).
+- `MethodNameMatcher` matches by method name, including overloaded methods with the same name.
 
-### AOP behavior and limitations
+These boundaries keep the implementation small enough to inspect while preserving the core mechanics demonstrated by the project.
 
-Configure AOP by passing a list of `InterceptorBinding` objects to the three-argument `ApplicationContext` constructor. Each binding combines a `MethodMatcher` with a `MethodInterceptor`. Matching bindings run in their configured order; each interceptor calls `invocation.proceed()` to continue the chain.
+## License
 
-```java
-List<InterceptorBinding> bindings = List.of(
-    new InterceptorBinding(
-        new MethodNameMatcher("placeOrder"),
-        new LoggingInterceptor()
-    )
-);
-
-try (ApplicationContext context = new ApplicationContext(
-        "com.example.app", new Environment(), bindings)) {
-    OrderService service = context.getBean(OrderService.class);
-    service.placeOrder();
-}
-```
-
-The example assumes `OrderService` is an interface and a matching bean is discovered under the supplied package. See `com.minispring.demo.aop` for runnable examples and the exact project setup.
-
-- **Interface-based only:** a JDK proxy implements interfaces; it is not an instance of the concrete target class. Retrieve proxied beans through their interface.
-- **Self-invocation:** a target method calling another method on `this` bypasses the proxy, so the inner call is not intercepted.
-- **Matching scope:** the current `MethodNameMatcher` matches by method name, so overloaded methods with the same name also match.
-- **No class proxying:** CGLIB-style subclass proxies, introductions, annotation-driven pointcuts, and full Spring AOP compatibility are not implemented.
-- **Post-processing:** AOP proxying happens after initialization for beans created after the AOP post-processor is registered. Existing infrastructure beans are not retroactively proxied.
-
-These are deliberate boundaries of this learning implementation, not claims of complete Spring compatibility. See [MiniSpring Internals](MINISPRING_INTERNALS.md) for the broader architecture and other limitations.
-
-## Learning method
-
-Each feature is approached in this order:
-
-1. Start with a concrete problem.
-2. Reason about a simple solution.
-3. Identify where that solution breaks down.
-4. Introduce the smallest useful abstraction.
-5. Implement it in MiniSpring.
-6. Add tests and document the behavior.
-7. Compare the simplified design with real Spring.
-
-The repository is both a working codebase and a record of that learning process.
+Distributed under the [MIT License](LICENSE).

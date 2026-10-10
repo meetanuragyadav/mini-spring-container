@@ -8,11 +8,11 @@ import com.minispring.lifecycle.*;
 /**
  * Demonstrates dependency injection into an {@link Bean} factory method.
  */
-public class FactoryArgumentTest {
+public class FactoryArgumentDemo {
 
     private final Logger logger;
 
-    public FactoryArgumentTest(Logger logger) {
+    public FactoryArgumentDemo(Logger logger) {
         this.logger = logger;
     }
 

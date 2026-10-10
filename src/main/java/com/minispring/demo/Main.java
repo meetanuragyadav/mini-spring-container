@@ -40,8 +40,8 @@ public final class Main {
                             + (first != second)
             );
 
-            FactoryArgumentTest factoryBean =
-                    context.getBean(FactoryArgumentTest.class);
+            FactoryArgumentDemo factoryBean =
+                    context.getBean(FactoryArgumentDemo.class);
             factoryBean.test();
         }
     }

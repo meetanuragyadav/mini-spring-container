@@ -21,9 +21,9 @@ public class AppConfig {
     }
 
     @Bean
-    public FactoryArgumentTest factoryArgumentTest(
+    public FactoryArgumentDemo factoryArgumentDemo(
             Logger logger) {
 
-        return new FactoryArgumentTest(logger);
+        return new FactoryArgumentDemo(logger);
     }
 }
